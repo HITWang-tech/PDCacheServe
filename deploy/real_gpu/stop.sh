@@ -14,3 +14,16 @@ for name in proxy prefiller decoder aggregated; do
     fi
   fi
 done
+
+# GNU setsid may fork when its caller is already a process-group leader. In that
+# case $! records the short-lived wrapper instead of the service. Sweep only the
+# project-specific command signatures so a stale pidfile cannot leave a proxy or
+# vLLM engine behind on a billed rental node.
+while read -r pid pgid command; do
+  case "$command" in
+    *".venv/bin/vllm serve"*|*" -m pdserve.nixl_proxy "*|*" -m pdserve.pd_proxy "*)
+      kill -- "-$pgid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+      echo "stopped orphaned service ($pid)"
+      ;;
+  esac
+done < <(ps -eo pid=,pgid=,args=)
