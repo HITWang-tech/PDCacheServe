@@ -5,8 +5,19 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MODEL="${MODEL:-/root/autodl-tmp/models/Qwen2.5-7B-Instruct}"
 SERVED_MODEL="${SERVED_MODEL:-Qwen2.5-7B-Instruct}"
 LOG_DIR="${LOG_DIR:-$ROOT/artifacts/real-gpu/logs}"
+PREFILL_DEVICE="${PREFILL_DEVICE:-0}"
+DECODE_DEVICE="${DECODE_DEVICE:-1}"
 mkdir -p "$LOG_DIR" /root/autodl-tmp/lmcache/prefiller
 export PATH="$ROOT/.venv/bin:$PATH"
+
+preflight_args=(
+  --devices "$PREFILL_DEVICE,$DECODE_DEVICE"
+  --output "$ROOT/artifacts/real-gpu/pd-preflight.json"
+)
+if [[ "${ALLOW_NO_P2P:-0}" == "1" ]]; then
+  preflight_args+=(--allow-no-p2p)
+fi
+"$ROOT/.venv/bin/python" -m pdserve.gpu_preflight "${preflight_args[@]}"
 
 wait_for_url() {
   local url="$1"
@@ -27,7 +38,7 @@ export VLLM_ENABLE_V1_MULTIPROCESSING=1
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 export UCX_TLS=cuda_ipc,cuda_copy,tcp
 
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES="$DECODE_DEVICE" \
 LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/decoder.yaml" \
 setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
@@ -40,7 +51,7 @@ setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
 echo "$!" > "$LOG_DIR/decoder.pid"
 wait_for_url http://127.0.0.1:8200/health decoder
 
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES="$PREFILL_DEVICE" \
 LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/prefiller.yaml" \
 setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \

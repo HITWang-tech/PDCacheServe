@@ -7,4 +7,4 @@ build/
 dist/
 *.egg-info/
 .env
-artifacts/real-gpu/
+artifacts/real-gpu/logs/

@@ -48,6 +48,13 @@ pdserve gpu-benchmark --url http://127.0.0.1:8000 \
 bash deploy/real_gpu/stop.sh
 ```
 
+启动脚本会先检查两张 GPU 是否支持双向 CUDA Peer Access。检查失败时默认拒绝
+启动，因为某些云平台上的 RTX 4090 虽然位于同一节点，但会禁用 P2P，导致 NIXL
+传输完成却产生错误 token。`ALLOW_NO_P2P=1` 仅用于复现和诊断，不得用于性能结论。
+
+分层 CPU/SSD KV Cache 与 1P1D 传输分别验证：前者由 Aggregated baseline 使用，
+P/D Prefiller 默认关闭本地缓存，防止跨模型或异步缓存条目污染传输正确性。
+
 `gpu-benchmark` 以 SSE 首个非空 token 的到达时间计算 TTFT，以后续 token
 平均间隔计算 TPOT，并保存每个请求的原始指标。报告必须同时保留
 成功率、SLO 达标率与失败原因，不得只挑选最优请求。
