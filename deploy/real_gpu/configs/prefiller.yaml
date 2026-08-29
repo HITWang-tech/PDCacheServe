@@ -1,8 +1,7 @@
 chunk_size: 256
-local_cpu: true
-max_local_cpu_size: 8
-local_disk: "file:///root/autodl-tmp/lmcache/prefiller"
-max_local_disk_size: 5
+local_cpu: false
+max_local_cpu_size: 0
+max_local_disk_size: 0
 remote_serde: null
 
 enable_pd: true
