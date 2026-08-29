@@ -50,6 +50,7 @@ def run_request(
     input_tokens: int,
     output_tokens: int,
     shared_prefix: bool,
+    ignore_eos: bool = False,
     timeout_seconds: float = 600.0,
 ) -> RequestMetric:
     try:
@@ -65,6 +66,7 @@ def run_request(
         "prompt": _prompt(input_tokens, shared_prefix),
         "max_tokens": output_tokens,
         "temperature": 0,
+        "ignore_eos": ignore_eos,
         "stream": True,
         "stream_options": {"include_usage": True},
     }
@@ -143,6 +145,7 @@ def run_gpu_benchmark(
     input_tokens: int = 2048,
     output_tokens: int = 128,
     shared_prefix: bool = False,
+    ignore_eos: bool = False,
     ttft_slo_ms: float = 2000.0,
     tpot_slo_ms: float = 80.0,
 ) -> Dict[str, object]:
@@ -158,6 +161,7 @@ def run_gpu_benchmark(
                 input_tokens,
                 output_tokens,
                 shared_prefix,
+                ignore_eos,
             )
             for request_id in range(requests)
         ]
@@ -173,6 +177,7 @@ def run_gpu_benchmark(
     summary["output_tokens_target"] = output_tokens
     summary["concurrency"] = concurrency
     summary["shared_prefix"] = shared_prefix
+    summary["ignore_eos"] = ignore_eos
     result = {"summary": summary, "requests": [asdict(item) for item in metrics]}
     destination = Path(output_path)
     destination.parent.mkdir(parents=True, exist_ok=True)

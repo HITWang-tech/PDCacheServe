@@ -31,6 +31,11 @@ def parser() -> argparse.ArgumentParser:
     gpu.add_argument("--input-tokens", type=int, default=2048)
     gpu.add_argument("--output-tokens", type=int, default=128)
     gpu.add_argument("--shared-prefix", action="store_true")
+    gpu.add_argument(
+        "--ignore-eos",
+        action="store_true",
+        help="force every request to generate the configured output-token count",
+    )
     gpu.add_argument("--ttft-slo-ms", type=float, default=2000.0)
     gpu.add_argument("--tpot-slo-ms", type=float, default=80.0)
     serve = commands.add_parser("serve")
@@ -80,6 +85,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             input_tokens=args.input_tokens,
             output_tokens=args.output_tokens,
             shared_prefix=args.shared_prefix,
+            ignore_eos=args.ignore_eos,
             ttft_slo_ms=args.ttft_slo_ms,
             tpot_slo_ms=args.tpot_slo_ms,
         )
