@@ -7,7 +7,7 @@ SERVED_MODEL="${SERVED_MODEL:-Qwen2.5-7B-Instruct}"
 LOG_DIR="${LOG_DIR:-$ROOT/artifacts/real-gpu/logs}"
 PREFILL_DEVICE="${PREFILL_DEVICE:-0}"
 DECODE_DEVICE="${DECODE_DEVICE:-1}"
-mkdir -p "$LOG_DIR" /root/autodl-tmp/lmcache/prefiller
+mkdir -p "$LOG_DIR"
 export PATH="$ROOT/.venv/bin:$PATH"
 
 preflight_args=(
@@ -39,39 +39,33 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
 export UCX_TLS=cuda_ipc,cuda_copy,tcp
 
 CUDA_VISIBLE_DEVICES="$DECODE_DEVICE" \
-LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/decoder.yaml" \
+VLLM_NIXL_SIDE_CHANNEL_PORT=5601 \
 setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
   --port 8200 --dtype float16 --max-model-len 8192 \
   --gpu-memory-utilization 0.82 --enforce-eager \
-  --no-enable-prefix-caching \
   --kv-transfer-config \
-  '{"kv_connector":"LMCacheConnectorV1","kv_role":"kv_consumer","kv_connector_extra_config":{"discard_partial_chunks":false,"lmcache_rpc_port":"consumer1","skip_last_n_tokens":1}}' \
+  '{"kv_connector":"NixlConnector","kv_role":"kv_consumer","kv_load_failure_policy":"fail"}' \
   >"$LOG_DIR/decoder.log" 2>&1 &
 echo "$!" > "$LOG_DIR/decoder.pid"
 wait_for_url http://127.0.0.1:8200/health decoder
 
 CUDA_VISIBLE_DEVICES="$PREFILL_DEVICE" \
-LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/prefiller.yaml" \
+VLLM_NIXL_SIDE_CHANNEL_PORT=5600 \
 setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
   --port 8100 --dtype float16 --max-model-len 8192 \
   --gpu-memory-utilization 0.82 --enforce-eager \
-  --no-enable-prefix-caching \
   --kv-transfer-config \
-  '{"kv_connector":"LMCacheConnectorV1","kv_role":"kv_producer","kv_connector_extra_config":{"discard_partial_chunks":false,"lmcache_rpc_port":"producer1"}}' \
+  '{"kv_connector":"NixlConnector","kv_role":"kv_producer","kv_load_failure_policy":"fail"}' \
   >"$LOG_DIR/prefiller.log" 2>&1 &
 echo "$!" > "$LOG_DIR/prefiller.pid"
 wait_for_url http://127.0.0.1:8100/health prefiller
 
-setsid "$ROOT/.venv/bin/python" -m pdserve.pd_proxy \
+setsid "$ROOT/.venv/bin/python" -m pdserve.nixl_proxy \
   --host 0.0.0.0 --port 8000 \
   --prefill-url http://127.0.0.1:8100 \
   --decode-url http://127.0.0.1:8200 \
-  --decoder-host 127.0.0.1 \
-  --decoder-init-port 7300 --decoder-alloc-port 7400 \
-  --notification-host 127.0.0.1 --notification-port 7500 \
-  --model "$MODEL" --pd-buffer-size 2147483648 --chunk-size 256 \
   >"$LOG_DIR/proxy.log" 2>&1 &
 echo "$!" > "$LOG_DIR/proxy.pid"
 wait_for_url http://127.0.0.1:8000/healthz proxy

@@ -79,9 +79,9 @@ curl http://127.0.0.1:8200/healthz
 
 ## 双卡真实 GPU 验证
 
-仓库内置了针对同机 2×RTX 4090 的固定部署：GPU 0 运行 Prefill，
-GPU 1 运行 Decode，LMCache 通过 NIXL/UCX 传输 KV，Prefill 侧同时开启
-8 GiB CPU 与 5 GiB SSD 缓存层。
+仓库内置了针对同机双 GPU 的固定部署：GPU 0 运行 Prefill，
+GPU 1 运行 Decode，vLLM 原生 `NixlConnector` 通过 NIXL/UCX 传输 KV。
+启动前必须通过双向 CUDA Peer Access 预检。
 
 ```bash
 # 默认模型目录：/root/autodl-tmp/models/Qwen2.5-7B-Instruct
@@ -92,13 +92,13 @@ pdserve gpu-benchmark \
   --model Qwen2.5-7B-Instruct \
   --requests 20 --concurrency 2 \
   --input-tokens 2048 --output-tokens 128 \
-  --shared-prefix \
+  --shared-prefix --ignore-eos \
   --output artifacts/real-gpu/pd-shared-prefix.json
 
 bash deploy/real_gpu/stop.sh
 ```
 
-聚合式+分层 Cache 基线使用 `launch_aggregated.sh`，实验时保持模型、
+聚合式原生 vLLM 基线使用 `launch_aggregated.sh`，实验时保持模型、
 Trace、显存比例和 SLO 一致。详细运行顺序见
 [`deploy/real_gpu/README.md`](deploy/real_gpu/README.md)。
 
