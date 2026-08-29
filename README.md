@@ -77,6 +77,31 @@ docker compose up --build
 curl http://127.0.0.1:8200/healthz
 ```
 
+## 双卡真实 GPU 验证
+
+仓库内置了针对同机 2×RTX 4090 的固定部署：GPU 0 运行 Prefill，
+GPU 1 运行 Decode，LMCache 通过 NIXL/UCX 传输 KV，Prefill 侧同时开启
+8 GiB CPU 与 5 GiB SSD 缓存层。
+
+```bash
+# 默认模型目录：/root/autodl-tmp/models/Qwen2.5-7B-Instruct
+bash deploy/real_gpu/launch_pd.sh
+
+pdserve gpu-benchmark \
+  --url http://127.0.0.1:8000 \
+  --model Qwen2.5-7B-Instruct \
+  --requests 20 --concurrency 2 \
+  --input-tokens 2048 --output-tokens 128 \
+  --shared-prefix \
+  --output artifacts/real-gpu/pd-shared-prefix.json
+
+bash deploy/real_gpu/stop.sh
+```
+
+聚合式+分层 Cache 基线使用 `launch_aggregated.sh`，实验时保持模型、
+Trace、显存比例和 SLO 一致。详细运行顺序见
+[`deploy/real_gpu/README.md`](deploy/real_gpu/README.md)。
+
 ## Benchmark
 
 当前仓库保存的是离散事件仿真，不是 GPU 实测：10 个随机种子、三档负载、四种策略，
@@ -109,7 +134,9 @@ KV-aware 相比 PD Round Robin：
 ## 项目边界
 
 - 已完成：控制面、分层 KV 目录、SLO 路由、执行器契约、API/CLI、仿真、测试和 Docker；
-- 待 GPU 环境验证：真实 vLLM/LMCache/NIXL KV 传输、TTFT/TPOT 和 PCIe/NVLink 带宽；
+- 已提供：vLLM/LMCache/NIXL 真实执行路径、P/D Proxy、启动脚本和
+  TTFT/TPOT/Goodput 实测工具；
+- 实测指标仅在 `artifacts/real-gpu/` 中保存完整运行记录后对外引用；
 - 不包含：自研 CUDA Kernel、自研 RDMA 数据面、模型权重或未经验证的生产 SLA。
 
 ## License
