@@ -31,6 +31,7 @@ def create_proxy(prefill_url: str, decode_url: str) -> FastAPI:
     async def forward(path: str, body: Dict[str, object]):
         prefill_body = dict(body)
         prefill_body["stream"] = False
+        prefill_body.pop("stream_options", None)
         prefill_body["max_tokens"] = 1
         if "max_completion_tokens" in prefill_body:
             prefill_body["max_completion_tokens"] = 1

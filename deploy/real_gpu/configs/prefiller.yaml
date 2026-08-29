@@ -5,10 +5,10 @@ local_disk: "file:///root/autodl-tmp/lmcache/prefiller"
 max_local_disk_size: 5
 remote_serde: null
 
-enable_nixl: true
-nixl_role: sender
-nixl_peer_host: localhost
-nixl_peer_port: 55555
-nixl_buffer_size: 1073741824
-nixl_buffer_device: cuda
-nixl_enable_gc: true
+enable_pd: true
+transfer_channel: nixl
+pd_role: sender
+pd_proxy_host: localhost
+pd_proxy_port: 7500
+pd_buffer_size: 1073741824
+pd_buffer_device: cuda

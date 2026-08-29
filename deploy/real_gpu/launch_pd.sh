@@ -12,7 +12,7 @@ wait_for_url() {
   local url="$1"
   local name="$2"
   for _ in $(seq 1 180); do
-    if curl -fsS "$url" >/dev/null; then
+    if curl -fsS "$url" >/dev/null 2>&1; then
       echo "$name is ready"
       return 0
     fi
@@ -22,7 +22,7 @@ wait_for_url() {
   return 1
 }
 
-export PYTHONHASHSEED="${PYTHONHASHSEED:-123}"
+export PYTHONHASHSEED="${PYTHONHASHSEED:-0}"
 export VLLM_ENABLE_V1_MULTIPROCESSING=1
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 export UCX_TLS=cuda_ipc,cuda_copy,tcp
@@ -33,8 +33,9 @@ setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
   --port 8200 --dtype float16 --max-model-len 8192 \
   --gpu-memory-utilization 0.82 --enforce-eager \
+  --no-enable-prefix-caching \
   --kv-transfer-config \
-  '{"kv_connector":"LMCacheConnectorV1","kv_role":"kv_consumer","kv_connector_extra_config":{"discard_partial_chunks":false,"lmcache_rpc_port":"consumer1"}}' \
+  '{"kv_connector":"LMCacheConnectorV1","kv_role":"kv_consumer","kv_connector_extra_config":{"discard_partial_chunks":false,"lmcache_rpc_port":"consumer1","skip_last_n_tokens":1}}' \
   >"$LOG_DIR/decoder.log" 2>&1 &
 echo "$!" > "$LOG_DIR/decoder.pid"
 wait_for_url http://127.0.0.1:8200/health decoder
@@ -45,6 +46,7 @@ setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
   --port 8100 --dtype float16 --max-model-len 8192 \
   --gpu-memory-utilization 0.82 --enforce-eager \
+  --no-enable-prefix-caching \
   --kv-transfer-config \
   '{"kv_connector":"LMCacheConnectorV1","kv_role":"kv_producer","kv_connector_extra_config":{"discard_partial_chunks":false,"lmcache_rpc_port":"producer1"}}' \
   >"$LOG_DIR/prefiller.log" 2>&1 &
