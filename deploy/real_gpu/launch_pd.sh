@@ -6,6 +6,7 @@ MODEL="${MODEL:-/root/autodl-tmp/models/Qwen2.5-7B-Instruct}"
 SERVED_MODEL="${SERVED_MODEL:-Qwen2.5-7B-Instruct}"
 LOG_DIR="${LOG_DIR:-$ROOT/artifacts/real-gpu/logs}"
 mkdir -p "$LOG_DIR" /root/autodl-tmp/lmcache/prefiller
+export PATH="$ROOT/.venv/bin:$PATH"
 
 wait_for_url() {
   local url="$1"
@@ -28,7 +29,7 @@ export UCX_TLS=cuda_ipc,cuda_copy,tcp
 
 CUDA_VISIBLE_DEVICES=1 \
 LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/decoder.yaml" \
-"$ROOT/.venv/bin/vllm" serve "$MODEL" \
+setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
   --port 8200 --dtype float16 --max-model-len 8192 \
   --gpu-memory-utilization 0.82 --enforce-eager \
@@ -40,7 +41,7 @@ wait_for_url http://127.0.0.1:8200/health decoder
 
 CUDA_VISIBLE_DEVICES=0 \
 LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/prefiller.yaml" \
-"$ROOT/.venv/bin/vllm" serve "$MODEL" \
+setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
   --port 8100 --dtype float16 --max-model-len 8192 \
   --gpu-memory-utilization 0.82 --enforce-eager \
@@ -50,7 +51,7 @@ LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/prefiller.yaml" \
 echo "$!" > "$LOG_DIR/prefiller.pid"
 wait_for_url http://127.0.0.1:8100/health prefiller
 
-"$ROOT/.venv/bin/python" -m pdserve.pd_proxy \
+setsid "$ROOT/.venv/bin/python" -m pdserve.pd_proxy \
   --host 0.0.0.0 --port 8000 \
   --prefill-url http://127.0.0.1:8100 \
   --decode-url http://127.0.0.1:8200 \

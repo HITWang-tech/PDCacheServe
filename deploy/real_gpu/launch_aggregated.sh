@@ -6,10 +6,11 @@ MODEL="${MODEL:-/root/autodl-tmp/models/Qwen2.5-7B-Instruct}"
 SERVED_MODEL="${SERVED_MODEL:-Qwen2.5-7B-Instruct}"
 LOG_DIR="${LOG_DIR:-$ROOT/artifacts/real-gpu/logs}"
 mkdir -p "$LOG_DIR" /root/autodl-tmp/lmcache/aggregated
+export PATH="$ROOT/.venv/bin:$PATH"
 
 CUDA_VISIBLE_DEVICES=0 \
 LMCACHE_CONFIG_FILE="$ROOT/deploy/real_gpu/configs/tiered-cache.yaml" \
-"$ROOT/.venv/bin/vllm" serve "$MODEL" \
+setsid "$ROOT/.venv/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_MODEL" \
   --port 8001 --dtype float16 --max-model-len 8192 \
   --gpu-memory-utilization 0.82 --enforce-eager \

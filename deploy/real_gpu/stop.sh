@@ -9,7 +9,7 @@ for name in proxy prefiller decoder aggregated; do
   if [[ -f "$pid_file" ]]; then
     pid="$(<"$pid_file")"
     if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then
-      kill "$pid"
+      kill -- "-$pid" 2>/dev/null || kill "$pid"
       echo "stopped $name ($pid)"
     fi
   fi
