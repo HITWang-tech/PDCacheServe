@@ -77,7 +77,9 @@ def create_proxy(prefill_url: str, decode_url: str) -> FastAPI:
             return JSONResponse(response.json())
 
         async def generate() -> AsyncIterator[bytes]:
-            async with app.state.decode.stream(path, json=body, headers=headers) as response:
+            async with app.state.decode.stream(
+                "POST", path, json=body, headers=headers
+            ) as response:
                 if response.is_error:
                     content = await response.aread()
                     raise HTTPException(response.status_code, content.decode())
