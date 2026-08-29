@@ -1,0 +1,15 @@
+services:
+  controller:
+    build:
+      context: .
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
+    ports:
+      - "8200:8200"
+    environment:
+      PDSERVE_EXECUTOR: simulated
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8200/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5

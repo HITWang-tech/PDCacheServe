@@ -1,0 +1,45 @@
+{
+  "layout": {
+    "model_id": "Qwen/Qwen2.5-7B-Instruct",
+    "dtype": "float16",
+    "block_size": 16,
+    "kv_layout": "standard",
+    "kv_bytes_per_token": 131072
+  },
+  "workers": [
+    {
+      "worker_id": "prefill-0",
+      "role": "prefill",
+      "endpoint": "http://prefill-0:8000",
+      "gpu_model": "RTX-4090-24GB",
+      "zone": "node-0",
+      "prefill_ms_per_token": 0.047,
+      "decode_ms_per_token": 8.6,
+      "bandwidth_gbps": 24.0,
+      "layout": {
+        "model_id": "Qwen/Qwen2.5-7B-Instruct",
+        "dtype": "float16",
+        "block_size": 16,
+        "kv_layout": "standard",
+        "kv_bytes_per_token": 131072
+      }
+    },
+    {
+      "worker_id": "decode-0",
+      "role": "decode",
+      "endpoint": "http://decode-0:8000",
+      "gpu_model": "RTX-4090-24GB",
+      "zone": "node-0",
+      "prefill_ms_per_token": 0.047,
+      "decode_ms_per_token": 8.6,
+      "bandwidth_gbps": 24.0,
+      "layout": {
+        "model_id": "Qwen/Qwen2.5-7B-Instruct",
+        "dtype": "float16",
+        "block_size": 16,
+        "kv_layout": "standard",
+        "kv_bytes_per_token": 131072
+      }
+    }
+  ]
+}
