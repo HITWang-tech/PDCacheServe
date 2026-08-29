@@ -57,6 +57,10 @@ setsid "$ROOT/.venv/bin/python" -m pdserve.pd_proxy \
   --host 0.0.0.0 --port 8000 \
   --prefill-url http://127.0.0.1:8100 \
   --decode-url http://127.0.0.1:8200 \
+  --decoder-host 127.0.0.1 \
+  --decoder-init-port 7300 --decoder-alloc-port 7400 \
+  --notification-host 127.0.0.1 --notification-port 7500 \
+  --model "$MODEL" --pd-buffer-size 2147483648 --chunk-size 256 \
   >"$LOG_DIR/proxy.log" 2>&1 &
 echo "$!" > "$LOG_DIR/proxy.pid"
 wait_for_url http://127.0.0.1:8000/healthz proxy
