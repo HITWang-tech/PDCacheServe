@@ -1,0 +1,4 @@
+torch 2.13.0+cu130
+vllm 0.28.0
+lmcache 0.5.4
+nixl 1.4.0

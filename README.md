@@ -119,6 +119,13 @@ KV-aware 相比 PD Round Robin：
 分离需要结合高速互联、长上下文、严格 TPOT SLO 或独立扩缩容需求选择，不能把论文中的
 上限收益直接搬到本项目。完整数据见 [`artifacts/benchmark/report.md`](artifacts/benchmark/report.md)。
 
+另外，在 2×A800 80 GB PCIe 上完成了 Qwen2.5-7B-Instruct 真实 P/D
+验证：正确性哨兵 10/10 通过，并发 2 与并发 8 两档负载的请求成功率、
+SLO 达标率均为 100%。并发 8 时 P/D 的 P95 TPOT 为 15.27 ms，
+聚合基线为 15.45 ms；P/D 吞吐低 2.94%，如实体现独立扩缩容与额外 KV
+传输开销的权衡。原始请求级指标见
+[`artifacts/real-gpu/a800/REPORT.md`](artifacts/real-gpu/a800/REPORT.md)。
+
 ## API
 
 | Method | Path | Purpose |

@@ -1,5 +1,9 @@
 # Real GPU validation — 2026-08-29
 
+> A successful 2 × A800 native-NIXL rerun is documented in
+> [`a800/REPORT.md`](a800/REPORT.md). This file retains the earlier 2 × RTX 4090
+> negative experiment because disabled CUDA P2P is an important deployment guardrail.
+
 ## Environment
 
 - 2 × NVIDIA GeForce RTX 4090 24 GB on one rental node

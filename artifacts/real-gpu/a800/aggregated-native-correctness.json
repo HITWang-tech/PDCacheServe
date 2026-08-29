@@ -1,0 +1,16 @@
+{
+  "mode": "aggregated-native-vllm",
+  "responses": [
+    "Paris",
+    "Paris",
+    "Paris",
+    "Paris",
+    "Paris",
+    "Paris",
+    "Paris",
+    "Paris",
+    "Paris",
+    "Paris"
+  ],
+  "all_exact_paris": true
+}
